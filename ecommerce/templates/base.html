@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}E-Commerce{% endblock %}</title>
+
+  <!-- CSS fixo do bundle principal do React -->
+  <link rel="stylesheet" href="{% static 'dist/assets/main.css' %}" />
+  
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  {% block content %}
+  <!-- O React montará a aplicação dentro do elemento #root em index.html -->
+  {% endblock %}
+
+  <!-- JS fixo do bundle principal do React -->
+  <script type="module" src="{% static 'dist/assets/main.js' %}"></script>
+  
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

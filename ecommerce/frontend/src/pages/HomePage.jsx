@@ -1,0 +1,175 @@
+{/*
+import { useState, useEffect } from 'react'
+
+export default function HomePage({ user, csrf }) {
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/members/logout/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', //importante
+      });
+    
+      if (response.ok) {
+        // Recarrega a página para pegar um CSRF token novo
+        window.location.href = '/';
+      } else {
+        alert('Erro ao fazer logout:', error);
+      }
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      // Fallback: recarrega mesmo se der erro
+      window.location.href = '/';
+    }
+  };
+  
+  return (
+    <div>
+      <h1>🛒 E-commerce React + Django</h1>
+
+      {user?.is_authenticated ? (
+        <div className="mb-4">
+          <p>Olá, <strong>{user.username}</strong>! Você está logado.</p>
+          <button onClick={handleLogout} className="btn btn-danger">
+            Sair
+          </button>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <a href="/members/login/" className="btn btn-primary me-2">
+            Fazer Login
+          </a>
+          <a href="/members/register/" className="btn btn-success">
+            Criar Conta
+          </a>
+        </div>
+      )}
+*/}
+      {/* Conteúdo da Home 
+      <div className="mt-5">
+         Seus cards, produtos, etc.
+      </div>
+    </div>
+  )
+}
+*/}
+
+import React, { useState, useEffect } from 'react';
+import { useCart } from "../contexts/CartContext";
+import CartModal from '../components/CartModal';
+
+const HomePage = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isCartOpen, setIsCartOpen] = useState(false); // Estado para controlar o modal
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('default'); // 'default', 'asc', 'desc'
+
+  const { addToCart, totalItems } = useCart();
+
+  useEffect(() => {
+    fetch('/api/products/')
+      .then((res) => res.json())
+      .then((data) => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar produtos:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  //Lógica de filtragem por nome e ordenação por preço
+  const filteredAndSortedProducts = products 
+    .filter((product) => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'asc') return Number(a.price) - Number(b.price);
+      if (sortOrder === 'desc') return Number(b.price) - Number(a.price);
+      return 0;
+    });
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Catálogo de Produtos</h2>
+
+        <button
+          onClick={() => setIsCartOpen(true)}
+          style={{ padding: '10px 18px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
+        >
+          🛒 Carrinho ({totalItems})
+        </button>
+      </div>
+
+      {/* Barra de Pesquisa e Filtro de Ordenação */}
+      <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Buscar produto pelo nome..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, minWidth: '250px', padding: '10px 14px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px' }}
+        />
+
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', backgroundColor: '#fff', cursor: 'pointer' }}
+        >
+          <option value="default">Ordenar por: Padrão</option>
+          <option value="asc">Menor Preço</option>
+          <option value="desc">Maior Preço</option>
+        </select>
+      </div>
+
+      {/* Grid de Produtos */}
+      {loading ? (
+        <p>Carregando catálogo...</p>
+      ) : filteredAndSortedProducts.length === 0 ? (
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          Nenhum produto encontrado {searchTerm && `para "${searchTerm}"`}.
+        </p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+          {filteredAndSortedProducts.map((product) => (
+            <div key={product.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff' }}>
+              <div>
+                <div style={{ width: '100%', height: '180px', backgroundColor: '#f0f0f0', marginBottom: '10px', borderRadius: '4px', overflow: 'hidden' }}>
+                  {product.image && (
+                    <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                </div>
+                <h3 style={{ fontSize: '18px', margin: '0 0 8px 0' }}>{product.name}</h3>
+                <p style={{ fontWeight: 'bold', fontSize: '18px', color: '#333', margin: '0 0 12px 0' }}>
+                  R$ {Number(product.price).toFixed(2)}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  addToCart(product);
+                  setIsCartOpen(true);
+                }}
+                style={{ width: '100%', padding: '10px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </div>
+  );
+};
+
+export default HomePage;
